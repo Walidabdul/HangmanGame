@@ -98,13 +98,64 @@ function getWordForLevel($difficulty) {
     <div class="container">
         <h2>Hangman Game</h2>
         <!-- Basic game interface -->
+        <!-- Difficulty selection form only if the game state is not set -->
+        <?php if (!isset($_SESSION['game_state'])): ?>
+        <form method="post">
+            <label for="difficulty">Select Difficulty: </label>
+            <select name="difficulty" id="difficulty">
+                <option value="easy" <?= isset($_POST['difficulty']) && $_POST['difficulty'] == 'easy' ? 'selected' : ''; ?>>Easy</option>
+                <option value="medium" <?= isset($_POST['difficulty']) && $_POST['difficulty'] == 'medium' ? 'selected' : ''; ?>>Medium</option>
+                <option value="hard" <?= isset($_POST['difficulty']) && $_POST['difficulty'] == 'hard' ? 'selected' : ''; ?>>Hard</option>
+            </select>
+            <button type="submit">Start Game</button>
+        </form>
+        <?php else: ?>
+             <!-- Hangman drawing based on lives remaining -->
+        <div class="hangman-drawing">
+            <?php
+            $lives = $_SESSION['game_state']['lives'];
+            echo "<pre>  O</pre>"; // Head
+            if ($lives <= 5) echo "<pre>  |</pre>"; // Body
+            if ($lives <= 4) echo "<pre> /|</pre>"; // Left arm
+            if ($lives <= 3) echo "<pre> /|\\</pre>"; // Right arm
+            if ($lives <= 2) echo "<pre> /</pre>"; // Left leg
+            if ($lives <= 1) echo "<pre> / \\</pre>"; // Right leg
+            ?>
+        </div>
+        <!-- Display the word with blanks for unrevealed letters -->
         <div class="word-display">
-            <!-- Word display placeholder -->
+            <?php foreach ($_SESSION['game_state']['revealed'] as $index => $revealed): ?>
+                <span class="letter">
+                    <?php echo $revealed ? $_SESSION['game_state']['word'][$index] : '_'; ?>
+                </span>
+            <?php endforeach; ?>
         </div>
         <form method="post">
-            <input type="text" name="guess" maxlength="1">
-            <button type="submit">Guess</button>
+            <?php foreach (range('A', 'Z') as $letter): ?>
+                <button type="submit" name="guess" value="<?php echo $letter; ?>" class="key" <?php echo in_array($letter, $_SESSION['game_state']['guessed']) ? 'disabled' : ''; ?>>
+                    <?php echo $letter; ?>
+                </button>
+            <?php endforeach; ?>
         </form>
-    </div>
+        <!-- Display lives and score -->
+        <p class="game-stats">Lives: <?php echo $_SESSION['game_state']['lives']; ?></p>
+        <p class="game-stats">Score: <?php echo $_SESSION['game_state']['score']; ?></p>
+
+        <!-- Display game over message -->
+        <?php if ($_SESSION['game_state']['game_over']): ?>
+            <p>Game Over! The word was: <?php echo $_SESSION['game_state']['word']; ?></p>
+            <form method="post">
+                 <button type="submit" name="new_game">Play Again</button>
+            </form>
+            <a href="menu.php">Back to Menu</a>
+        <?php elseif ($_SESSION['game_state']['won']): ?>
+            <p>Congratulations, you won!</p>
+            <form method="post">
+               <button type="submit" name="new_game">Play Again</button>
+            </form>
+            <a href="menu.php">Back to Menu</a>
+      <?php endif; ?>
+    <?php endif; ?>
+  </div>
 </body>
 </html>
